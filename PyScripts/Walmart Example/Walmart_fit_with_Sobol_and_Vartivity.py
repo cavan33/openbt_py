@@ -4,8 +4,8 @@ Import the Walmart data and run sobol/fitv on it to observe and plot their diffe
 import numpy as np; import random
 import matplotlib.pyplot as plt
 import sys
-from openbt import OPENBT # Should be in the working directory (no path.append needed)
-sys.path.append("PyScripts/Walmart Example/Functions")
+from openbt_py import openbt # New way of doing things
+sys.path.append("PyScripts/Walmart Example/Functions") # Might be different for your filesystem
 from Construct_Walmart_Data import *
 from summarize_output import *
 from walmart_pred_plot import *
@@ -45,7 +45,7 @@ preds = np.asarray(preds_list).T # This is supposedly faster than having it be a
 """
 
 preds = x # For in-sample
-m = OPENBT(model="bart", ndpost=N, nadapt = nadapt, nskip=burn, power=beta,
+m = openbt.OPENBT(model="bart", ndpost=N, nadapt = nadapt, nskip=burn, power=beta,
              base=alpha, tc=tc, numcut=nc, ntree=m, ntreeh=ntreeh, k=k,
              overallsd=shat, overallnu=nu)
 fit = m.fit(x,y)

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import invoke # A task execution tool; unused
 from sklearn.base import ClassifierMixin, RegressorMixin, BaseEstimator
 # ^ Two of these aren't used yet; B.E. is the parent class of OPENBT

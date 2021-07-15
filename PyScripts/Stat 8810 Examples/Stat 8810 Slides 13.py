@@ -9,8 +9,8 @@ to how I wanted to set some more parameters.
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from openbt import OPENBT # Should be in the working directory (no path.append needed)
-sys.path.append("PyScripts/Stat 8810 Examples/Functions")
+from openbt_py import openbt # New way of doing things
+sys.path.append("PyScripts/Stat 8810 Examples/Functions") # Might be different for your filesystem
 from gen_data8810 import *
 # Example (Our usual GP realization) originally using BayesTree, 
 # now written in Python with openbt-python.
@@ -47,7 +47,7 @@ path = 'PyScripts/Plots/' # Might be different for your filesystem
 #---------------------------------------------------------------------------------------
 def fit_pipeline(design, y, model, ndpost, nadapt, nskip, power, base, tc, numcut, ntree,
                  ntreeh, k, overallsd, overallnu, npreds, fig, path, fname):
-     m = OPENBT(model=model, ndpost=ndpost, nadapt = nadapt, nskip=nskip, power=power,
+     m = openbt.OPENBT(model=model, ndpost=ndpost, nadapt = nadapt, nskip=nskip, power=power,
                 base=base, tc=tc, numcut=numcut, ntree=ntree, ntreeh=ntreeh, k=k,
                 overallsd=overallsd, overallnu=overallnu)
      fit = m.fit(design,y)
@@ -203,7 +203,7 @@ nc=1000
 
 # Do this one manually, since it's a different setup than what I wrote the
 # function for:
-m11 = OPENBT(model="bart", ndpost=N, nadapt = nadapt, nskip=burn, power=beta,
+m11 = openbt.OPENBT(model="bart", ndpost=N, nadapt = nadapt, nskip=burn, power=beta,
              base=alpha, tc=tc, numcut=nc, ntree=m, ntreeh=ntreeh, k=k,
              overallsd=shat, overallnu=nu)
 fit11 = m11.fit(x,y)

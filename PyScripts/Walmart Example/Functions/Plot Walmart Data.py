@@ -4,8 +4,8 @@ Import the Walmart data and plot it to visualize what it's like.
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from openbt import OPENBT # Should be in the working directory (no path.append needed)
-sys.path.append("PyScripts/Walmart Example")
+from openbt_py import openbt # New way of doing things
+sys.path.append("PyScripts/Walmart Example") # Might be different for your filesystem
 from Construct_Walmart_Data import *
 
 

@@ -9,8 +9,8 @@ to how I wanted to set some more parameters.
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from openbt import OPENBT # Should be in the working directory (no path.append needed)
-sys.path.append("PyScripts/Stat 8810 Examples/Functions")
+from openbt_py import openbt # New way of doing things
+sys.path.append("PyScripts/Stat 8810 Examples/Functions") # Might be different for your filesystem
 from gen_data8810 import *
 # Example (Our usual GP realization) originally using BayesTree, 
 # now written in Python with openbt-python.
@@ -47,7 +47,7 @@ fname = 'Slides11.png'
 #---------------------------------------------------------------------------------------
 def fit_pipeline(design, y, model, ndpost, nskip, power, base, tc, numcut, ntree,
                  ntreeh, k, overallsd, overallnu, npreds, fig, path, fname):
-     m = OPENBT(model=model, ndpost=ndpost, nskip=nskip, power=power, base=base,
+     m = openbt.OPENBT(model=model, ndpost=ndpost, nskip=nskip, power=power, base=base,
                 tc=tc, numcut=numcut, ntree=ntree, ntreeh=ntreeh, k=k,
                 overallsd=overallsd, overallnu=overallnu)
      fit = m.fit(design,y)
