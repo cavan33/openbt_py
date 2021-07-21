@@ -61,7 +61,13 @@ class OPENBT(BaseEstimator):
         res = {} # Missing the influence attribute from the R code (skip for now)
         self.maxx = np.ceil(np.max(self.X_train, axis=1))
         self.minx = np.floor(np.min(self.X_train, axis=1))
-        for key in self.__dict__.keys():
+        keys = list(self.__dict__.keys()) # Ones we want to save into the object
+        for later_key in ['p_test', 'n_test', 'q_lower', 'q_upper', 'xproot', 
+            'mdraws', 'sdraws', 'mmean', 'smean', 'msd', 'ssd', 'm_5', 's_5', 
+            'm_lower', 's_lower', 'm_upper', 's_upper']:
+            if later_key in keys:
+                keys.remove(later_key) # Taking away possible residual keys from fitp, fits, or fitv
+        for key in keys:
              res[key] = self.__dict__[key]
         res['minx'] = self.minx; res['maxx'] = self.maxx;
         return res
@@ -77,7 +83,7 @@ class OPENBT(BaseEstimator):
                   "modifiedprobit": 7,
                   "merck_truncated": 8}
         if self.model not in models:
-            raise KeyError("Not supported model type")
+            raise KeyError("Not supported model type. Please specify a model.")
         self.modeltype = models[self.model]
         k_map = {1: 2, 2: 2, 3: 2, 4: 2, 5: 5, 6: 1, 7: 1, 8: 2}
         onu_map = {1: 1, 2: 1, 3: 1, 4: 10, 5: 10, 6: -1, 7: -1, 8: 10}
@@ -223,7 +229,7 @@ class OPENBT(BaseEstimator):
         if self.X_train.shape[0] == 1:
              print("1 x variable, so correlation = 1")
              np.savetxt(str(self.fpath / Path(self.chgvroot)), [1], fmt='%.7f')
-        elif self.X_train.shape[0] == 1:
+        elif self.X_train.shape[0] == 2:
              print("2 x variables")
              np.savetxt(str(self.fpath / Path(self.chgvroot)),
                         [spearmanr(self.X_train, axis=1)[0]], fmt='%.7f')
@@ -283,8 +289,8 @@ class OPENBT(BaseEstimator):
 
 
     def _read_in_preds(self):
-        mdraw_files = sorted(list(self.fpath.glob("model.mdraws*")))
-        sdraw_files = sorted(list(self.fpath.glob("model.sdraws*")))
+        mdraw_files = sorted(list(self.fpath.glob(self.modelname+".mdraws*")))
+        sdraw_files = sorted(list(self.fpath.glob(self.modelname+".sdraws*")))
         mdraws = []
         for f in mdraw_files:
             read = open(f, "r"); lines = read.readlines()
@@ -329,10 +335,10 @@ class OPENBT(BaseEstimator):
     def clean_model(self):
         subprocess.run(f"rm -rf {str(self.fpath)}", shell=True)
                
-#-----------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------
 # Clark's functions (made from scratch, not edited from Zoltan's version):
     def _read_in_vartivity(self, q_lower, q_upper):
-        vdraws_files = sorted(list(self.fpath.glob("model.vdraws")))
+        vdraws_files = sorted(list(self.fpath.glob(self.modelname+".vdraws")))
         self.vdraws = np.array([])
         for f in vdraws_files:
             read = open(f, "r"); lines = read.readlines()
@@ -348,7 +354,7 @@ class OPENBT(BaseEstimator):
         idx = np.where(colnorm > 0)[0] # print(idx)
         # print(colnorm); print(idx)
         
-        colnorm = colnorm.reshape(self.ndpost, 1) # Will always have 1 column since we summed
+        colnorm = colnorm.reshape(self.ndpost, 1) # Will always have 1 column b/c we summed
         # print(colnorm.shape); print(idx.shape)
         self.vdraws[idx] = self.vdraws[idx] / colnorm[idx]
         # print(self.vdraws[0:60]); print(self.vdraws.shape)
@@ -374,7 +380,7 @@ class OPENBT(BaseEstimator):
              self.vdraws_upper = self.vdraws_upper[0]
              
         # Now do everything again for the "h" version of all these quantities: 
-        vdrawsh_files = sorted(list(self.fpath.glob("model.vdrawsh")))
+        vdrawsh_files = sorted(list(self.fpath.glob(self.modelname+".vdrawsh")))
         self.vdrawsh = np.array([])
         for f in vdrawsh_files:
             self.vdrawsh = np.append(self.vdrawsh, np.loadtxt(f))
@@ -446,7 +452,7 @@ class OPENBT(BaseEstimator):
    
      
     def _read_in_sobol(self, q_lower, q_upper):
-        sobol_draws_files = sorted(list(self.fpath.glob("model.sobol*")))
+        sobol_draws_files = sorted(list(self.fpath.glob(self.modelname+".sobol*")))
         # print(sobol_draws_files)
         self.so_draws = np.loadtxt(sobol_draws_files[0])
         for i in range(1, self.tc):
@@ -494,7 +500,7 @@ class OPENBT(BaseEstimator):
              self.si_5 = self.si_5[0]
              self.si_lower = self.si_lower[0]
              self.si_upper = self.si_upper[0]
-        # ^ Names?    
+        # ^ Names? Nah   
         # Do this again for i,j:
         self.msij = np.empty(self.num_pairs)
         self.sij_sd = np.empty(self.num_pairs)
@@ -514,7 +520,7 @@ class OPENBT(BaseEstimator):
              self.sij_5 = self.sij_5[0]
              self.sij_lower = self.sij_lower[0]
              self.sij_upper = self.sij_upper[0]   
-        # ^ Names?     
+        # ^ Names? Nah  
         # Do this again for t:
         self.mtsi = np.empty(self.p)
         self.tsi_sd = np.empty(self.p)
@@ -587,38 +593,52 @@ class OPENBT(BaseEstimator):
     
 
 
-    # Save a posterior tree fit (post) from the tmp working directory
+    # Save a posterior tree fit object (post) from the tmp working directory
     # into a local zip file given by [file].zip
     # If not file option specified, uses [model name].zip as the file.
-    def save_fit(self, post, dirname = None, postname = 'post_PyData'):
-        if(type(post) != dict): sys.exit("Invalid object.\n")
-        if(dirname == None): dirname = post['modelname']
-        if(dirname[-3:] != ".obt"): dirname = dirname + ".obt"
-        import posixpath
-        fname = posixpath.split(dirname)[1]
-        files = sorted(list(self.fpath.glob("*"))) # Files to save (long names)
-        from zipfile import ZipFile; import pickle; import subprocess
+    def save(self, post = None, dirname = None, postname = 'post_PyData', est = False):
+        if est == False:
+            if(type(post) != dict): sys.exit("Invalid posterior fit.\n")
+            if(dirname == None): dirname = post['modelname']
+            if(dirname[-3:] != ".obt"): dirname = dirname + ".obt"
+            import posixpath
+            fname = posixpath.split(dirname)[1]
+            files = sorted(list(self.fpath.glob("*"))) # Files to save (long names)
+            from zipfile import ZipFile; import pickle; import subprocess
+            with ZipFile(dirname, 'w') as myZip:
+                # Save contents of the temp file (s1, x1, y1, etc.) to a zip folder:
+                for i in range(len(files)):
+                    myZip.write(files[i], posixpath.split(files[i])[1])
+                print("Saved fit setup files to", dirname)
+                fit_name = dirname[:-4]+'_'+postname
+                with open(fit_name, 'wb') as f:
+                    pickle.dump(post, f)
+                myZip.write(fit_name, postname)
+                subprocess.run(f"rm -f {fit_name}", shell=True)
+                print("Saved fit object to", dirname)
+            myZip.close()
+        else: # (est == True), save the fit ESTIMATOR object (usually called m)
+            if (dirname == None):
+                dirname = post # b/c the user may have entered things in the wrong order
+            if (dirname == None): sys.exit("Please specify directory name to save the estimator object.\n")
+            from joblib import dump
+            dump(self, dirname+'.joblib')
+            print("Saved estimator object to", dirname)
         
-        with ZipFile(dirname, 'w') as myZip:
-            # Save contents of the temp file (s1, x1, y1, etc) to a zip folder:
-            for i in range(len(files)):
-                myZip.write(files[i], posixpath.split(files[i])[1])
-            print("Saved fit files to", dirname)
-            fit_obj_name = dirname[:-4]+'_'+postname
-            with open(fit_obj_name, 'wb') as f:
-                pickle.dump(post, f)
-            myZip.write(fit_obj_name, postname)
-            subprocess.run(f"rm -f {fit_obj_name}", shell=True)
-            print("Saved posterior to", dirname)
-        myZip.close()    
 
-
-    def load_fit(self, dirname = None, postname = 'post_PyData'):  
+# Load the posterior tree fit object (doesn't load any files like s1, x1, y1, etc):
+def load(dirname = None, postname = 'post_PyData', est = False):  
+    if est == False:
         if(dirname[-3:] != ".obt"): dirname = dirname + ".obt"
         import pickle; from zipfile import ZipFile
         with ZipFile(dirname, 'r') as myZip:
             # print(myZip.namelist())
             with myZip.open(postname) as myfile:
-                loaded_model = pickle.load(myfile)
-        myZip.close() 
-        return(loaded_model)
+                loaded_obj = pickle.load(myfile)
+        myZip.close()
+    else: # (est == True), load the fit ESTIMATOR object (usually called m)
+        if (dirname == None): sys.exit("Please specify directory name to load the estimator object.\n")
+        if(dirname[-6:] != ".joblib"): dirname = dirname + ".joblib"
+        from joblib import load
+        loaded_obj = load(dirname)
+    return(loaded_obj)

@@ -6,14 +6,16 @@ This script replicates the OpenBT fit behavior using Python. I took functions fr
 Zoltan Puha's repo, but made a new config file (openbt.py) which was tailored
 to how I wanted to set some more parameters.
 """
+import os
+os.chdir("/home/clark/Documents/OpenBT/OpenBT_package2/src/openbt") # Will be different for your files
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from openbt_py import openbt # New way of doing things
-sys.path.append("PyScripts/Stat 8810 Examples/Functions") # Might be different for your filesystem
+from openbt.openbt import OPENBT # The class can now be referenced just by typing OPENBT
+sys.path.append("PyScripts (Examples)/Stat 8810 Examples/Functions") # Might be different for your filesystem
 from gen_data8810 import *
 # Example (Our usual GP realization) originally using BayesTree, 
-# now written in Python with openbt-python.
+# now written in Python.
 design, y = gen_data()
 
 # Now, set up the fit:
@@ -47,7 +49,7 @@ fname = 'Slides11.png'
 #---------------------------------------------------------------------------------------
 def fit_pipeline(design, y, model, ndpost, nskip, power, base, tc, numcut, ntree,
                  ntreeh, k, overallsd, overallnu, npreds, fig, path, fname):
-     m = openbt.OPENBT(model=model, ndpost=ndpost, nskip=nskip, power=power, base=base,
+     m = OPENBT(model=model, ndpost=ndpost, nskip=nskip, power=power, base=base,
                 tc=tc, numcut=numcut, ntree=ntree, ntreeh=ntreeh, k=k,
                 overallsd=overallsd, overallnu=overallnu)
      fit = m.fit(design,y)

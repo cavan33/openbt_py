@@ -1,10 +1,12 @@
 """
-Import the Walmart data and run sobol/fitv on it to observe and plot their differences
+Import the Walmart data and run sobol/fitv on it to observe and plot their differences.
 """
+import os
+os.chdir("/home/clark/Documents/OpenBT/OpenBT_package2/src/openbt") # Will be different for your files
 import numpy as np; import random
 import matplotlib.pyplot as plt
 import sys
-from openbt_py import openbt # New way of doing things
+from openbt.openbt import OPENBT # You can now reference the class just by typing OPENBT
 sys.path.append("PyScripts/Walmart Example/Functions") # Might be different for your filesystem
 from Construct_Walmart_Data import *
 from summarize_output import *
@@ -45,7 +47,7 @@ preds = np.asarray(preds_list).T # This is supposedly faster than having it be a
 """
 
 preds = x # For in-sample
-m = openbt.OPENBT(model="bart", ndpost=N, nadapt = nadapt, nskip=burn, power=beta,
+m = OPENBT(model="bart", ndpost=N, nadapt = nadapt, nskip=burn, power=beta,
              base=alpha, tc=tc, numcut=nc, ntree=m, ntreeh=ntreeh, k=k,
              overallsd=shat, overallnu=nu)
 fit = m.fit(x,y)
