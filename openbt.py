@@ -45,9 +45,26 @@ class OPENBT(BaseEstimator):
 
 
     def fit(self, X, y):
-        """Writes out data and fits model
         """
-        self.X_train = np.transpose(X); self.y_orig = y
+        Writes out data and fits model. X and y should be numpy arrays, 
+        but I added some checks to allow 1-D lists to be accepted. No promises on 
+        attempting to pass in a grid of lists within a list as an array.
+        """
+        # First, make sure the input is compatible with future functions/fits:
+        if (type(X) == list):
+            X = np.array(X)
+            print("Completed list-to-numpy_array conversion for X. Be careful about row/column mixups!")
+        if (type(y) == list):
+            y = np.array(y)
+            print("Completed list-to-numpy_array conversion for y. Be careful about row/column mixups!")
+        self.X_train = np.transpose(X)
+        if (len(self.X_train.shape) == 1): # If shape is (n, ), change it to (n, 1):
+            self.X_train = self.X_train.reshape(1, len(X)) 
+            # ^ Reshaping in case of weird 1-variable input (e.g. a 1D list)
+        if (len(y.shape) == 1): # Same thing for y
+            y = y.reshape(len(y), 1)
+            
+        self.y_orig = y    
         self.fmean = np.mean(y)
         # self.y_train = y - self.fmean # I axed this in order to customize for different modeltypes; see define_params
         self._define_params() # This is where the default variables get overwritten
@@ -257,6 +274,17 @@ class OPENBT(BaseEstimator):
 
 
     def predict(self, X, q_lower=0.025, q_upper=0.975, **kwargs):
+        """
+        Like with fit() X (the preds matrix) should be a numpy array, 
+        but I added a couple of checks to allow a list to be accepted.
+        """
+        if (type(X) == list):
+            X = np.array(X)
+            print("Completed list-to-numpy_array conversion for the preds. Be careful about row/column mixups!")
+        if (len(X.shape) == 1): # If shape is (n, ), change it to (n, 1):
+            X = X.reshape(len(X), 1) 
+            # ^ Reshaping in case of weird 1-variable input (e.g. a 1D list)
+
         self.p_test = X.shape[1]
         self.n_test = X.shape[0]
         self.q_lower = q_lower; self.q_upper = q_upper

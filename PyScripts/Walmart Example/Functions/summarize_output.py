@@ -29,7 +29,7 @@ def summarize_fits(fits):
      # print(fits['sij_upper']); print(fits['mtsi']); print(fits['tsi_sd'])
      # print(fits['tsi_5']); print(fits['tsi_lower']); print(fits['tsi_upper'])
      
-def save_fit_obj(fit, fname, objtype):
+def save_fit_txt(fit, fname, objtype):
      from pathlib import Path
      to_save = dict(fit) # A "shallow copy"
      configfile = Path(fname)
@@ -63,7 +63,7 @@ def save_fit_obj(fit, fname, objtype):
                f.write("Mean(sij_upper): \n"); f.write(str(np.mean(fit['sij_upper']))+"\n")
                f.write("Mean(so_draws): \n"); f.write(str(np.mean(fit['so_draws']))+"\n")
                
-  
+"""  
 def save_fits_old(fits, fname):
      from pathlib import Path
      to_save = dict(fits) # A "shallow copy"
@@ -74,3 +74,4 @@ def save_fits_old(fits, fname):
           for cat in to_save:
                tfile.write(str(cat)+": \n")
                tfile.write(str(to_save[cat])+"\n")
+"""

@@ -62,12 +62,12 @@ fitv = m.vartivity()
 fits = m.sobol(cmdopt = 'MPI', tc = tc)
 # summarize_fits(fits)
 
-# Save fit objects:
+# Save the results of fits as easily-viewable text files:
 fpath1 = 'PyScripts/Results/Walmart Example/'
-save_fit_obj(fit, f'{fpath1}fit_result.txt', objtype = 'fit')
-save_fit_obj(fitp, f'{fpath1}fitp_result.txt', objtype = 'fitp')
-save_fit_obj(fitv, f'{fpath1}fitv_result.txt', objtype = 'fitv')
-save_fit_obj(fits, f'{fpath1}fits_result.txt', objtype = 'fits')
+save_fit_txt(fit, f'{fpath1}fit_result.txt', objtype = 'fit')
+save_fit_txt(fitp, f'{fpath1}fitp_result.txt', objtype = 'fitp')
+save_fit_txt(fitv, f'{fpath1}fitv_result.txt', objtype = 'fitv')
+save_fit_txt(fits, f'{fpath1}fits_result.txt', objtype = 'fits')
 
 
 # Plot y vs yhat plots:
