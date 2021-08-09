@@ -624,7 +624,7 @@ class OPENBT(BaseEstimator):
     # Save a posterior tree fit object (post) from the tmp working directory
     # into a local zip file given by [file].zip
     # If not file option specified, uses [model name].zip as the file.
-    def save(self, post = None, dirname = None, postname = 'post_PyData', est = False):
+    def obt_save(self, post = None, dirname = None, postname = 'post_PyData', est = False):
         if est == False:
             if(type(post) != dict): sys.exit("Invalid posterior fit.\n")
             if(dirname == None): dirname = post['modelname']
@@ -655,7 +655,7 @@ class OPENBT(BaseEstimator):
         
 
 # Load the posterior tree fit object (doesn't load any files like s1, x1, y1, etc):
-def load(dirname = None, postname = 'post_PyData', est = False):  
+def obt_load(dirname = None, postname = 'post_PyData', est = False):  
     if est == False:
         if(dirname[-3:] != ".obt"): dirname = dirname + ".obt"
         import pickle; from zipfile import ZipFile

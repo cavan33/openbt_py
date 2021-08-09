@@ -27,7 +27,7 @@ y = np.zeros(n)
 for i in range(n):
     y[i] = braninsc(x[i,])
 
-from openbt.openbt import OPENBT, load
+from openbt.openbt import OPENBT, obt_load
 m = OPENBT(model = "bart", tc = 4, modelname = "branin")
 fit = m.fit(x, y)
 
@@ -43,15 +43,15 @@ ax.axline([0, 0], [1, 1])
 
 #--------------------------------------------------------------------------------------------
 # Save fitted MODEL object (not the estimator object, m) as test.obt in the working directory
-m.save(fit, "test", est = False)
+m.obt_save(fit, "test", est = False)
 # Load fitted model object (AKA fit object) to a new object
-fit2 = load("test", est = False)
+fit2 = obt_load("test", est = False)
 
-# We can also save/load the fit ESTIMATOR object by specifying est = True in save()/load().
+# We can also save/load the fit ESTIMATOR object by specifying est = True in obt_save()/load().
 # The estimator object has all our settings and properties, but not fit results. 
 # This is similar to scikit-learn saving/loading its estimators.
-m.save("test_fit_est", est = True)
-m2 = load("test_fit_est", est = True)
+m.obt_save("test_fit_est", est = True)
+m2 = obt_load("test_fit_est", est = True)
 # If you wish, you can see that m2 (the loaded estimator object) can perform fits:
 # fit3 = m2.fit(x, y)
 # m2 can perform predictions, too:
