@@ -1,6 +1,6 @@
 [project]
 name = "pyopenbt"
-version = "0.0.1"
+version = "0.0.6"
 description = "python interface to openbt"
 authors = [
 	{name = "Clark Van Lieshout", email = "clarkvan33@gmail.com"},
