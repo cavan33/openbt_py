@@ -324,7 +324,7 @@ class OPENBT(BaseEstimator):
             if lines[0] != '\n' and lines[1] != '\n': # If it's nonempty
                  mdraws.append(np.loadtxt(f))
         # print(mdraws[0].shape); print(len(mdraws))
-        self.mdraws = np.concatenate(mdraws, axis=1) # Got rid of the transpose
+        self.mdraws = np.stack(mdraws, axis=1) # Got rid of the transpose
         sdraws = []
         for f in sdraw_files:
             read = open(f, "r"); lines = read.readlines()
@@ -332,7 +332,7 @@ class OPENBT(BaseEstimator):
                  sdraws.append(np.loadtxt(f))
         # print(sdraws[0]); print(sdraws[0][0])
         # print(len(sdraws)); print(len(sdraws[0])); print(len(sdraws[0][0]))
-        self.sdraws = np.concatenate(sdraws, axis=1) # Got rid of the transpose
+        self.sdraws = np.stack(sdraws, axis=1) # Got rid of the transpose
         
         # New (added by me), since R returns arrays like these by default:
         # Calculate mmean and smean arrays, and related statistics
