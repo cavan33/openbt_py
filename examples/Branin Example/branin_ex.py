@@ -1,6 +1,7 @@
 """
 Branin Function example for Python openbt package
 """
+#%%
 # Test Branin function, rescaled
 def braninsc (xx):
     x1 = xx[0]
@@ -27,13 +28,14 @@ y = np.zeros(n)
 for i in range(n):
     y[i] = braninsc(x[i,])
 
-from openbt.openbt import OPENBT, obt_load
+from pyopenbt.openbt import OPENBT, obt_load
 m = OPENBT(model = "bart", tc = 4, modelname = "branin")
 fit = m.fit(x, y)
 
 # Calculate in-sample predictions
 fitp = m.predict(x, tc = 4)
 
+#%%
 # Make a simple plot
 import matplotlib.pyplot as plt
 fig = plt.figure(figsize=(16,9)); ax = fig.add_subplot(111)
@@ -67,3 +69,5 @@ fits = m.sobol(cmdopt = 'MPI', tc = 4)
 print(fits['msi'])
 print(fits['mtsi'])
 print(fits['msij'])
+
+# %%
