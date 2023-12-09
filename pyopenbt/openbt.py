@@ -29,13 +29,10 @@ class OPENBT(BaseEstimator):
         self.printevery = 100
         self.numcut = 100
         self.adaptevery = 100
-        # Here are the extra parameters that I added, since I wanted to customize them:
         self.overallsd = None; self.overallnu = None
         self.k = None
         self.ntree = None; self.ntreeh = None
         self.truncateds = None
-        # hyperthread = False # Supposed to let you run processes on all hyperthreads, not just each core
-        # I added a few more if statements in _define_params() to make these go smoothly
         self.modelname = "model"
         self.summarystats = "FALSE"
         self.__dict__.update((key, value) for key, value in kwargs.items())
@@ -65,7 +62,7 @@ class OPENBT(BaseEstimator):
             
         self.y_orig = y    
         self.fmean = np.mean(y)
-        # self.y_train = y - self.fmean # I axed this in order to customize for different modeltypes; see define_params
+
         self._define_params() # This is where the default variables get overwritten
         print("Writing config file and data")
         self._write_config_file()
@@ -188,7 +185,6 @@ class OPENBT(BaseEstimator):
              self.truncateds = (self.y_train == miny)
         if self.tc <= 1: 
              print("Setting tc to 2"); self.tc = 2
-        # print((self.k, self.overallsd, self.overallnu, self.ntree, self.ntreeh))
 
 
     def _write_config_file(self):
@@ -210,13 +206,11 @@ class OPENBT(BaseEstimator):
                       self.probchv, self.probchvh, self.minnumbot,
                       self.minnumboth, self.printevery, "xi", self.modelname,
                       self.summarystats]
-        # print(run_params)
+
         self.configfile = Path(self.fpath / "config")
         with self.configfile.open("w") as tfile:
             for param in run_params:
                 tfile.write(str(param)+"\n")
-        # print(os.path.abspath(self.configfile))
-        # sys.exit('Examining tmp file(s)') # The config file was correct when I looked at it manually.
 
 
     def __write_chunks(self, data, no_chunks, var, *args):
@@ -235,8 +229,8 @@ class OPENBT(BaseEstimator):
 
 
     def _write_data(self):
-        splits = (self.n - 1) // (self.n/(self.tc)) # Should = tc - 1 as long as n >= tc
-        # print("splits =", splits)
+        splits = self.tc-1
+        
         self.__write_chunks(self.y_train, splits, "y", '%.7f')
         self.__write_chunks(np.transpose(self.X_train), splits, "x", '%.7f')
         self.__write_chunks(np.ones((self.n), dtype="int"),
@@ -257,19 +251,14 @@ class OPENBT(BaseEstimator):
         for k, v in self.xi.items():
             np.savetxt(
                 str(self.fpath / Path(self.xiroot + str(k+1))), v, fmt='%.7f')
-        # print(os.path.abspath(self.fpath))
-        # sys.exit('Examining tmp file(s)') # The data files were correct:
-        # For tc = 4: 1 chgv, 1 config, 3 s's, 3 x's, 3 y's, 1 xi (xi had the most data).
+                
 
 
     def _run_model(self, train=True):
         cmd = "openbtcli" if train else "openbtpred"
         sp = subprocess.run(["mpirun", "-np", str(self.tc), cmd, str(self.fpath)],
                             stdin=subprocess.DEVNULL, capture_output=True)
-        # print(sp)
-        # A check:
-        # if not(train):
-        #     print(os.path.abspath(self.fpath)); sys.exit('Examining tmp file(s)')
+
 
 
     def predict(self, X, q_lower=0.025, q_upper=0.975, **kwargs):
@@ -288,9 +277,7 @@ class OPENBT(BaseEstimator):
         self.n_test = X.shape[0]
         self.q_lower = q_lower; self.q_upper = q_upper
         self.xproot = "xp"
-        self.__write_chunks(X, (self.n_test) // (self.n_test/(self.tc)),
-                            self.xproot,
-                            '%.7f')
+        self.__write_chunks(X, self.tc, self.xproot, '%.7f')
         self.configfile = Path(self.fpath / "config.pred")
         pred_params = [self.modelname, self.modeltype,
                        self.xiroot, self.xproot, self.ndpost,
@@ -450,8 +437,7 @@ class OPENBT(BaseEstimator):
     def vartivity(self, q_lower=0.025, q_upper=0.975):
         """Calculate and return variable activity information
         """
-        # params (all are already set, actually)
-        # self.p = len(self.xi[0][0])? # This definition is bad, but p is already defined in define_params()
+        
         # Write to config file:
         vartivity_params = [self.modelname, self.ndpost, self.ntree,
                             self.ntreeh, self.p]
@@ -461,11 +447,10 @@ class OPENBT(BaseEstimator):
             for param in vartivity_params:
                 tfile.write(str(param)+"\n")
         # Run vartivity program  -- it's not actually parallel so no call to mpirun.
-        # run_local = os.path.exists("openbtvartivity") # Doesn't matter, since the command is the same either way
         cmd = "openbtvartivity"
         sp = subprocess.run([cmd, str(self.fpath)],
                             stdin=subprocess.DEVNULL, capture_output=True)
-        # print(sp)
+        
         # Read in result (and set extra attributes like .5, .lower, .upper, etc.):
         self._read_in_vartivity(q_lower, q_upper)
         
@@ -486,20 +471,20 @@ class OPENBT(BaseEstimator):
      
     def _read_in_sobol(self, q_lower, q_upper):
         sobol_draws_files = sorted(list(self.fpath.glob(self.modelname+".sobol*")))
-        # print(sobol_draws_files)
+
         self.so_draws = np.loadtxt(sobol_draws_files[0])
         for i in range(1, self.tc):
              read = open(sobol_draws_files[i], "r"); lines = read.readlines()
-             if lines[0] != '\n' and lines[1] != '\n': # If it's nonempty
+             if lines[0] != '\n' and lines[1] != '\n':  # If it's nonempty
                   self.so_draws = np.vstack((self.so_draws,
                                   np.loadtxt(sobol_draws_files[i])))   
-        # print(self.so_draws.shape); print(self.so_draws[0:10])
+
         labs_temp = list(itertools.combinations(range(1, self.p + 1), 2))
         labs = np.empty(len(labs_temp), dtype = '<U4')
         for i in range(len(labs_temp)):
              labs[i] =  ', '.join(map(str, labs_temp[i]))
-        # print(self.so_draws.shape)
-        ncol = self.so_draws.shape[1]; # nrow = self.so_draws.shape[0]
+
+        ncol = self.so_draws.shape[1]; 
         draws = self.so_draws; p = self.p # ^ Shorthand to make the next lines shorter
         # All this is the same as R, but the beginning of the indices are shifted by
         # 1 since Python starts at index 0. Remember, Python omits the column at the 
@@ -533,7 +518,7 @@ class OPENBT(BaseEstimator):
              self.si_5 = self.si_5[0]
              self.si_lower = self.si_lower[0]
              self.si_upper = self.si_upper[0]
-        # ^ Names? Nah   
+
         # Do this again for i,j:
         self.msij = np.empty(self.num_pairs)
         self.sij_sd = np.empty(self.num_pairs)
@@ -553,7 +538,7 @@ class OPENBT(BaseEstimator):
              self.sij_5 = self.sij_5[0]
              self.sij_lower = self.sij_lower[0]
              self.sij_upper = self.sij_upper[0]   
-        # ^ Names? Nah  
+
         # Do this again for t:
         self.mtsi = np.empty(self.p)
         self.tsi_sd = np.empty(self.p)
@@ -573,10 +558,9 @@ class OPENBT(BaseEstimator):
              self.tsi_5 = self.tsi_5[0]
              self.tsi_lower = self.tsi_lower[0]
              self.tsi_upper = self.tsi_upper[0] 
-        # ^ Names? Nah    
        
         
-    def sobol(self, cmdopt = 'serial', q_lower=0.025, q_upper=0.975, tc = 4):  
+    def sobol(self, q_lower=0.025, q_upper=0.975):  
         """Calculate Sobol indices (more accurate than vartivity)
         """
         if (self.p <= 1 or (self.p - int(self.p) != 0)):
@@ -585,7 +569,7 @@ class OPENBT(BaseEstimator):
         sobol_params = [self.modelname, self.xiroot, self.ndpost, self.ntree,
                             self.ntreeh, self.p, self.minx, self.maxx, self.tc]
         self.configfile = Path(self.fpath / "config.sobol")
-        # print("Directory for sobol calculations:", self.fpath) #print(sobol_params); 
+
         with self.configfile.open("w") as tfile:
             for param in sobol_params:
                 if type(param) != str and type(param) != int: # Makes minx & maxx into writable quantities, not arrays
@@ -594,21 +578,14 @@ class OPENBT(BaseEstimator):
                 else: tfile.write(str(param)+"\n")
         # Run sobol program: optional to use MPI.
         cmd = "openbtsobol"
-        if(cmdopt == 'serial'):
-             sp = subprocess.run([cmd, str(self.fpath)],
+        sp = subprocess.run(["mpirun", "-np", str(self.tc), cmd, str(self.fpath)],
                             stdin=subprocess.DEVNULL, capture_output=True)
-        elif(cmdopt == 'MPI'):
-             sp = subprocess.run(["mpirun", "-np", str(tc), cmd, str(self.fpath)],
-                            stdin=subprocess.DEVNULL, capture_output=True)
-        else:
-             sys.exit('Sobol: Invalid cmdopt (command option)')
-        # print(sp)
         # Read in result (and set a bunch of extra attributes):
         self._read_in_sobol(q_lower, q_upper)
         
         # Compile all the new attributes into something that will be saved as "fits" when the function is called:
         res = {}
-        # colnames(res$vidraws)=paste("V",1:p,sep="") # Implement this (and all the other colnames) if you use pandas
+        
         # Set all of the self variables/attributes to res here:
         res['vidraws'] = self.vidraws; res['vijdraws'] = self.vijdraws;
         res['tvidraws'] = self.tvidraws; res['vdraws'] = self.vdraws;
@@ -650,7 +627,7 @@ class OPENBT(BaseEstimator):
                 subprocess.run(f"rm -f {fit_name}", shell=True)
                 print("Saved fit object to", dirname)
             myZip.close()
-        else: # (est == True), save the fit ESTIMATOR object (usually called m)
+        else:  # save the fit ESTIMATOR object (usually called m)
             if (dirname == None):
                 dirname = post # b/c the user may have entered things in the wrong order
             if (dirname == None): sys.exit("Please specify directory name to save the estimator object.\n")
@@ -665,11 +642,10 @@ def obt_load(dirname = None, postname = 'post_PyData', est = False):
         if(dirname[-3:] != ".obt"): dirname = dirname + ".obt"
         import pickle; from zipfile import ZipFile
         with ZipFile(dirname, 'r') as myZip:
-            # print(myZip.namelist())
             with myZip.open(postname) as myfile:
                 loaded_obj = pickle.load(myfile)
         myZip.close()
-    else: # (est == True), load the fit ESTIMATOR object (usually called m)
+    else: # load the fit ESTIMATOR object (usually called m)
         if (dirname == None): sys.exit("Please specify directory name to load the estimator object.\n")
         if(dirname[-6:] != ".joblib"): dirname = dirname + ".joblib"
         from joblib import load
