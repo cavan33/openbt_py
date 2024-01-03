@@ -41,21 +41,18 @@ jobs:
   build_wheels:
     needs: [build]
     if: startsWith( github.ref, 'refs/tags/')
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, windows-2022, macos-11]
+    name: Build wheel
+    runs-on: ubuntu-latest
         
     steps:
       - uses: actions/checkout@v4
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        run: pipx run build --wheel
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./wheelhouse/*.whl
+          path: dist/*.whl
 
   build_sdist:
     needs: [build]

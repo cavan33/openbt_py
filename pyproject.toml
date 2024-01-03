@@ -34,10 +34,3 @@ classifiers = [
 [project.urls]
 homepage = "https://github.com/cavan33/openbt_py"
 repository = "https://github.com/cavan33/openbt_py"
-
-[tool.cibuildwheel]
-# Note: the below skip command doesn't do much currently, the platforms to
-# build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
-# `tools/ci/cirrus_wheels.yml`.
-skip = "pp* *-manylinux_i686 *_ppc64le *_s390x *-win32 *_i686"
-build-verbosity = "3"
