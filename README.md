@@ -105,7 +105,7 @@ Again, for more examples of using OpenBT, explore the examples folder in the [Gi
 
 ### See Also:  
 [Github "Homepage" for this package](https://github.com/cavan33/openbt_py)  
-PyPI [Package Home](https://pypi.org/project/openbt/)  
+PyPI [Package Home](https://pypi.org/project/pyopenbt/)  
 
 ### Contributions
 All contributions are welcome. You can help this project be better by reporting issues, bugs, 
