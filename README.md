@@ -115,4 +115,4 @@ or forking the repo and creating a pull request.
 
 ### License
 The package is licensed under the BSD 3-Clause License. A copy of the
-[license](LICENSE.txt) can be found along with the code.
+[license](LICENSE) can be found along with the code.
