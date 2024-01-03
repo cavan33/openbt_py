@@ -1,27 +1,23 @@
-from sklearn.base import ClassifierMixin, RegressorMixin, BaseEstimator
+from sklearn.base import BaseEstimator
 
 # ^ Two of these aren't used yet; B.E. is the parent class of OPENBT
 import tempfile  # Generate temporary directories/files
 from pathlib import Path  # To write filepaths
-from collections import (
-    defaultdict,
-)  # For setting dictionaries with default values; unused
 from scipy.stats import spearmanr  # For calculating the spearman coeff
 import pickle  # For writing to compressed (pickled) test files; unused
 import numpy as np  # For manipulating arrays, doing math, etc.
 import subprocess  # For running a process in the command line
 from scipy.stats import norm  # Similar to pnorm, rnorm, qnorm, etc. in R
 import sys
-import os  # For exit() and checking the config files
 import itertools  # To makes labels for sobol variable pairs
-import pandas as pd  # Sobol has column names, so each returned array has to be a pandas df
 
 
 class OPENBT(BaseEstimator):
     """Class to run openbtcli by using sklearn-like calls"""
 
     def __init__(self, **kwargs):
-        self.ndpost = 1000  # All of these are defaults; overwriting comes later
+        # All of these are defaults; overwriting comes later
+        self.ndpost = 1000
         self.nskip = 100
         self.nadapt = 1000
         self.power = 2.0
@@ -50,8 +46,8 @@ class OPENBT(BaseEstimator):
     def fit(self, X, y):
         """
         Writes out data and fits model. X and y should be numpy arrays,
-        but I added some checks to allow 1-D lists to be accepted. No promises on
-        attempting to pass in a grid of lists within a list as an array.
+        but I added some checks to allow 1-D lists to be accepted. No promises
+        on attempting to pass in a grid of lists within a list as an array.
         """
         # First, make sure the input is compatible with future functions/fits:
         if type(X) == list:
@@ -74,7 +70,8 @@ class OPENBT(BaseEstimator):
         self.y_orig = y
         self.fmean = np.mean(y)
 
-        self._define_params()  # This is where the default variables get overwritten
+        # This is where the default variables get overwritten
+        self._define_params()
         print("Writing config file and data")
         self._write_config_file()
         self._write_data()
@@ -82,10 +79,12 @@ class OPENBT(BaseEstimator):
         self._run_model()
 
         # New: Return attributes to be saved as a separate fit object:
-        res = {}  # Missing the influence attribute from the R code (skip for now)
+        # Missing the influence attribute from the R code (skip for now)
+        res = {}
         self.maxx = np.ceil(np.max(self.X_train, axis=1))
         self.minx = np.floor(np.min(self.X_train, axis=1))
-        keys = list(self.__dict__.keys())  # Ones we want to save into the object
+        # Ones we want to save into the object
+        keys = list(self.__dict__.keys())
         for later_key in [
             "p_test",
             "n_test",
@@ -106,9 +105,8 @@ class OPENBT(BaseEstimator):
             "s_upper",
         ]:
             if later_key in keys:
-                keys.remove(
-                    later_key
-                )  # Taking away possible residual keys from fitp, fits, or fitv
+                # Taking away possible residual keys from fitp, fits, or fitv
+                keys.remove(later_key)
         for key in keys:
             res[key] = self.__dict__[key]
         res["minx"] = self.minx
@@ -623,7 +621,7 @@ class OPENBT(BaseEstimator):
             self.si_lower[j] = np.percentile(self.sidraws[:, j], self.q_lower)
             self.si_upper[j] = np.percentile(self.sidraws[:, j], self.q_upper)
 
-        if len(self.sidraws[0]) == 1:  #  Make the output just a double, not a 2D array
+        if len(self.sidraws[0]) == 1:  # Make the output just a double, not a 2D array
             self.msi = self.msi[0]
             self.msi_sd = self.msi_sd[0]
             self.si_5 = self.si_5[0]
@@ -742,8 +740,9 @@ class OPENBT(BaseEstimator):
     # Save a posterior tree fit object (post) from the tmp working directory
     # into a local zip file given by [file].zip
     # If not file option specified, uses [model name].zip as the file.
-    def obt_save(self, post=None, dirname=None, postname="post_PyData", est=False):
-        if est == False:
+    def obt_save(self, post=None, dirname=None, postname="post_PyData", 
+                 est=False):
+        if est is False:
             if type(post) != dict:
                 sys.exit("Invalid posterior fit.\n")
             if dirname == None:
@@ -755,7 +754,6 @@ class OPENBT(BaseEstimator):
             fname = posixpath.split(dirname)[1]
             files = sorted(list(self.fpath.glob("*")))  # Files to save (long names)
             from zipfile import ZipFile
-            import pickle
             import subprocess
 
             with ZipFile(dirname, "w") as myZip:
@@ -787,7 +785,7 @@ class OPENBT(BaseEstimator):
 
 # Load the posterior tree fit object (doesn't load any files like s1, x1, y1, etc):
 def obt_load(dirname=None, postname="post_PyData", est=False):
-    if est == False:
+    if est is False:
         if dirname[-3:] != ".obt":
             dirname = dirname + ".obt"
         import pickle
@@ -798,7 +796,7 @@ def obt_load(dirname=None, postname="post_PyData", est=False):
                 loaded_obj = pickle.load(myfile)
         myZip.close()
     else:  # load the fit ESTIMATOR object (usually called m)
-        if dirname == None:
+        if dirname is None:
             sys.exit("Please specify directory name to load the estimator object.\n")
         if dirname[-6:] != ".joblib":
             dirname = dirname + ".joblib"
